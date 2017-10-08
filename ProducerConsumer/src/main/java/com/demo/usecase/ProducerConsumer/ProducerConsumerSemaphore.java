@@ -1,11 +1,21 @@
 package com.demo.usecase.ProducerConsumer;
 
+import java.util.Vector;
 import java.util.concurrent.Semaphore;
 
 class CustomQueue{
-	int item;
-	Semaphore semProd = new Semaphore(1);
-	Semaphore semCons = new Semaphore(0);
+	Vector<Integer> v;
+	int maxSize;
+	Semaphore semProd;
+	Semaphore semCons;
+	
+	CustomQueue(int maxSize){
+		this.maxSize = maxSize;
+		this.v = new Vector<Integer>();
+		semProd = new Semaphore(maxSize);
+		semCons = new Semaphore(0);
+	}
+	
 	
 	public void put(int i) {		
 		try {
@@ -14,8 +24,8 @@ class CustomQueue{
 		catch(Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println("Producer producer "+i);
-		this.item = i;
+		System.out.println("Producer producing "+i);
+		v.add(i);
 		semCons.release();		
 	}
 	
@@ -26,7 +36,8 @@ class CustomQueue{
 		catch(Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println("Consumer consuming "+ this.item);
+		System.out.println("Consumer consuming "+ v.get(0));
+		v.remove(0);
 		semProd.release();
 	}
 }
@@ -58,7 +69,7 @@ class Consumer2 implements Runnable{
 
 public class ProducerConsumerSemaphore {
 	public static void main(String args[]) {
-		CustomQueue q = new CustomQueue();		
+		CustomQueue q = new CustomQueue(5);		
 		Thread prod = new Thread(new Producer2(q));
 		Thread cons = new Thread(new Consumer2(q));	
 		prod.start();

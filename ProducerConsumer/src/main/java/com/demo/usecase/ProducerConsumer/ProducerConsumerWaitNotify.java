@@ -2,14 +2,16 @@ package com.demo.usecase.ProducerConsumer;
 
 import java.util.Vector;
 
+
 class Producer1 implements Runnable{
 	Vector<Integer> v;
 	int size;
 	
-	public Producer1(Vector<Integer> v, int size) {
-		this.v = v;
-	    this.size = size;
+	public Producer1(Vector<Integer> v, int size) {		
+	    this.v = v;
+	    this.size =size;
 	}
+	
 	public void run() {
 		for(int i=1;i<20;i++) {
 			try {
@@ -21,18 +23,18 @@ class Producer1 implements Runnable{
 		}
 	}
 	
-	private void produce(int i) throws InterruptedException{		
-		while(v.size() == size) {
-			synchronized (v) {
-				System.out.println("Producer is waiting");
+	private void produce(int i) throws InterruptedException{
+		synchronized(v) {
+			while(v.size() == size) {
+				System.out.println("Producer waiting");
 				v.wait();
-			}			
+			}
 		}
-		synchronized (v) {
-			System.out.println("Producing value " +i);
+		synchronized(v) {
+			System.out.println("Producer producing" + i);
+			v.notifyAll();
 			v.add(i);
-			v.notify();	
-		}		
+		}
 	}
 }
 
@@ -41,7 +43,7 @@ class Consumer1 implements Runnable{
 	int size;
 	public Consumer1(Vector<Integer> v, int size) {
 		this.v = v;
-		this.size = size;
+		this.size = this.size;
 	}
 	
 	public void run(){
@@ -56,20 +58,20 @@ class Consumer1 implements Runnable{
 	}
 	
 	private void consume() throws InterruptedException{
-		
-		while(v.size() ==0) {
-			synchronized (v) {
-				System.out.println("Consumer is waiting");
+		synchronized (v) {
+			while(v.size()==0) {
+				System.out.println("Consumer waiting");
 				v.wait();
-			}			
+			}
 		}
-		synchronized(v) {
-			System.out.println("Consuming " + v.get(0));
+		synchronized (v) {
+			System.out.println("Consumer consumin"+v.get(0));
+			v.notifyAll();
 			v.remove(0);
-			v.notify();
 		}
 	}
 }
+
 public class ProducerConsumerWaitNotify {
 	public static void main(String[] args) {
 		int size = 5;
