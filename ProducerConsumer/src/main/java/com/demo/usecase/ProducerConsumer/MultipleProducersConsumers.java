@@ -1,11 +1,12 @@
 package com.demo.usecase.ProducerConsumer;
 
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class Producer implements Runnable{
 	Vector<Integer> v;
 	int size;
-	static int proCount =1;
+	static AtomicInteger proCount = new AtomicInteger(1);
 	public Producer(Vector<Integer> v, int size) {		
 		this.v = v;
 		this.size = size;
@@ -24,26 +25,24 @@ class Producer implements Runnable{
 	
 	private void produce() throws InterruptedException{		
 		synchronized (v) {
-			while(v.size() == size) {
-				System.out.println(Thread.currentThread().getName() + " is waiting");
-				v.wait();
-			}
-			if(proCount <= 20) {
-				v.notifyAll();
-				System.out.println(Thread.currentThread().getName() +"  added " +proCount);
-				v.add(proCount);
-				proCount++;
+			if(proCount.get() <= 20) { 
+				while(v.size() == size) {
+					System.out.println(Thread.currentThread().getName() + " is waiting");
+					v.wait();
+				}
 
+				v.notifyAll();
+				System.out.println(Thread.currentThread().getName() +"  added " +(proCount.get()+1));
+				v.add(proCount.getAndIncrement());
 			}
 		}
 	}
-	
 }
 
 class Consumer implements Runnable{
 	Vector<Integer> v;
 	int size;
-	static int conCount =1;
+	static AtomicInteger conCount = new AtomicInteger(1);
 	public Consumer(Vector<Integer> v, int size) {
 		this.size = size;
 		this.v = v;
@@ -62,15 +61,15 @@ class Consumer implements Runnable{
 	
 	private void consume() throws InterruptedException{		
 		synchronized (v) {
-			while(v.size() == 0) {
-				System.out.println(Thread.currentThread().getName() +" is waiting");
-				v.wait();
-			}		
-			if(conCount<=20) {
+			if(conCount.get()<=20) {
+				while(v.size() == 0) {
+					System.out.println(Thread.currentThread().getName() +" is waiting");
+					v.wait();
+				}
 				v.notifyAll();
 				System.out.println(Thread.currentThread().getName() +" is consuming "+ v.get(0));			
 				v.remove(0);
-				conCount++;
+				conCount.getAndIncrement();
 			}
 		}
 	}
@@ -80,7 +79,7 @@ public class MultipleProducersConsumers {
 	public static void main(String[] args) {
 		Vector<Integer> v = new Vector<>();
 		int size = 5;
-		for(int i=0;i<2;i++) {
+		for(int i=0;i<10;i++) {
 			new Thread(new Producer(v, size), "Producer"+i).start();
 			new Thread(new Consumer(v, size), "Consumer"+i).start();
 		}
