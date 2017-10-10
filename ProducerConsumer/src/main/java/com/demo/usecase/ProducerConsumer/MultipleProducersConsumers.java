@@ -30,7 +30,8 @@ class Producer implements Runnable{
 					System.out.println(Thread.currentThread().getName() + " is waiting");
 					v.wait();
 				}
-
+			}
+			if(proCount.get() <= 20) { 
 				v.notifyAll();
 				System.out.println(Thread.currentThread().getName() +"  added " +(proCount.get()+1));
 				v.add(proCount.getAndIncrement());
@@ -66,6 +67,8 @@ class Consumer implements Runnable{
 					System.out.println(Thread.currentThread().getName() +" is waiting");
 					v.wait();
 				}
+			}
+			if(conCount.get()<=20) {
 				v.notifyAll();
 				System.out.println(Thread.currentThread().getName() +" is consuming "+ v.get(0));			
 				v.remove(0);
