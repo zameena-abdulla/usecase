@@ -1,4 +1,4 @@
-package com.demo.usecase.MergeSort;
+package usecase.CustomConcurrentCounter;
 
 /**
  * Hello world!

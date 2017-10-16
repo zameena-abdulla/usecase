@@ -1,19 +1,20 @@
 package com.demo.usecase.ProducerConsumer;
 
+import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class Producer implements Runnable{
-	Vector<Integer> v;
+	ArrayList<Integer> v;
 	int size;
-	static AtomicInteger proCount = new AtomicInteger(1);
-	public Producer(Vector<Integer> v, int size) {		
+	static volatile int proCount = 1;
+	public Producer(ArrayList<Integer> v, int size) {		
 		this.v = v;
 		this.size = size;
 	}
 	
 	public void run() {	
-		while(true) {
+		while(proCount<20) {
 			try {
 				produce();
 			}
@@ -25,32 +26,32 @@ class Producer implements Runnable{
 	
 	private void produce() throws InterruptedException{		
 		synchronized (v) {
-			if(proCount.get() <= 20) { 
-				while(v.size() == size) {
-					System.out.println(Thread.currentThread().getName() + " is waiting");
-					v.wait();
+			while(v.size() == size && proCount<20) {
+				System.out.println(Thread.currentThread().getName() + " is waiting");
+				v.wait();
+			}	
+			synchronized (v) {
+				if(proCount<20) {
+					v.notifyAll();
+					System.out.println(Thread.currentThread().getName() +"  added " +(proCount));	
+					v.add(proCount++);
 				}
-			}
-			if(proCount.get() <= 20) { 
-				v.notifyAll();
-				System.out.println(Thread.currentThread().getName() +"  added " +(proCount.get()+1));
-				v.add(proCount.getAndIncrement());
 			}
 		}
 	}
 }
 
 class Consumer implements Runnable{
-	Vector<Integer> v;
+	ArrayList<Integer> v;
 	int size;
-	static AtomicInteger conCount = new AtomicInteger(1);
-	public Consumer(Vector<Integer> v, int size) {
+	static volatile int conCount =1;
+	public Consumer(ArrayList<Integer> v, int size) {
 		this.size = size;
 		this.v = v;
 	}
 	
 	public void run() {
-		while(true)
+		while(conCount<20)
 		try {
 			consume();
 		}
@@ -61,18 +62,18 @@ class Consumer implements Runnable{
 	}
 	
 	private void consume() throws InterruptedException{		
+		synchronized (v) {	
+			while(v.size() == 0 && conCount<20) {
+				System.out.println(Thread.currentThread().getName() +" is waiting");
+				v.wait();
+			}	
+		}
 		synchronized (v) {
-			if(conCount.get()<=20) {
-				while(v.size() == 0) {
-					System.out.println(Thread.currentThread().getName() +" is waiting");
-					v.wait();
-				}
-			}
-			if(conCount.get()<=20) {
+			if(conCount<20) {
 				v.notifyAll();
 				System.out.println(Thread.currentThread().getName() +" is consuming "+ v.get(0));			
 				v.remove(0);
-				conCount.getAndIncrement();
+				conCount++;	
 			}
 		}
 	}
@@ -80,7 +81,7 @@ class Consumer implements Runnable{
 public class MultipleProducersConsumers {
 
 	public static void main(String[] args) {
-		Vector<Integer> v = new Vector<>();
+		ArrayList<Integer> v = new ArrayList<>();
 		int size = 5;
 		for(int i=0;i<10;i++) {
 			new Thread(new Producer(v, size), "Producer"+i).start();
