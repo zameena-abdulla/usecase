@@ -1,4 +1,4 @@
-package usecase.CustomConcurrentCounter;
+package usecase.GS;
 
 /**
  * Hello world!
